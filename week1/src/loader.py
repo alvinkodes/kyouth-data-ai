@@ -12,7 +12,7 @@ def create_db(output_dir):
     cursor = conn.cursor()
     
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS table1 (
+        CREATE TABLE IF NOT EXISTS job (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             source_id TEXT UNIQUE NOT NULL,
             job_title TEXT NOT NULL,
@@ -45,7 +45,7 @@ def load_all_jsons(input_dir, output_dir):
 
         cursor.execute(
             """
-                INSERT OR IGNORE INTO table1 (source_id, job_title, company, description)
+                INSERT OR IGNORE INTO job (source_id, job_title, company, description)
                 VALUES (?, ?, ?, ?)
             """,
                 (data["source_id"], data["job_title"], data["company"], data["description"]))
