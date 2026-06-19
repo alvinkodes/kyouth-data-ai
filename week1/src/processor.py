@@ -63,6 +63,7 @@ def process_html(infile, outfile):
 def process_all_html(input_dir, output_dir):
     print("Silver:...")
     if not input_dir.exists():
+        print(f"Input directory {input_dir} does not exist.")
         return
     if not output_dir.exists():
         output_dir.mkdir()
