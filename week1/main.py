@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from src.ingestor import ingest_all_mhtml
 from src.processor import process_all_html
+from src.loader import load_all_jsons
 
 SOURCE_DIR = Path("data/0_source")
 BRONZE_DIR = Path("data/1_bronze")
@@ -19,9 +20,15 @@ def run_silver():
 	output_dir = SILVER_DIR
 	process_all_html(input_dir, output_dir)
 
+def run_gold():
+	input_dir = SILVER_DIR
+	output_dir = GOLD_DIR
+	load_all_jsons(input_dir, output_dir)
+
 aliases = {
 	"ingest": run_bronze,
-	"process": run_silver
+	"process": run_silver,
+	"load": run_gold
 }
 
 def main():
