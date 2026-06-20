@@ -3,6 +3,7 @@ from pathlib import Path
 from src.ingestor import ingest_all_mhtml
 from src.processor import process_all_html
 from src.loader import load_all_jsons
+from src.profiler import run_data_profile
 
 SOURCE_DIR = Path("data/0_source")
 BRONZE_DIR = Path("data/1_bronze")
@@ -25,15 +26,27 @@ def run_gold():
 	output_dir = GOLD_DIR
 	load_all_jsons(input_dir, output_dir)
 
+def run_profiler():
+	db_path = GOLD_DIR / DB_NAME
+	run_data_profile(db_path)
+
+def run_all():
+	run_bronze()
+	run_silver()
+	run_gold()
+	run_profiler()
+
 aliases = {
 	"ingest": run_bronze,
 	"process": run_silver,
-	"load": run_gold
+	"load": run_gold,
+	"profile": run_profiler,
+	"all": run_all
 }
 
 def main():
 	if len(sys.argv) != 2:
-		print("Usage: python main.py <command>")
+		print("Usage: python main.py [ingest|process|load|profile|all]")
 		sys.exit(1)
 	
 	cmd = sys.argv[1]
