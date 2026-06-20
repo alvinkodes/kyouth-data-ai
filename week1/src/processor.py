@@ -21,25 +21,13 @@ def process_html(infile, outfile):
 
     try:
         source_id = soup.select_one('[property="og:url"]')
-        if not source_id:
-            print(f"Missing source_id in: {infile.name}")
-            return
-        source_id = source_id.get("content").rsplit('/', 1)[-1]
+        source_id = source_id.get("content").rsplit('/', 1)[-1] if source_id else None
         job_title = soup.select_one('[data-automation="job-detail-title"]')
-        if not job_title:
-            print(f"Missing job_title in: {infile.name}")
-            return
-        job_title = job_title.get_text(separator=" ", strip=True)
+        job_title = job_title.get_text(separator=" ", strip=True) if job_title else None
         company = soup.select_one('[data-automation="advertiser-name"]')
-        if not company:
-            print(f"Missing company in: {infile.name}")
-            return
-        company = company.get_text(separator=" ", strip=True)
+        company = company.get_text(separator=" ", strip=True) if company else None
         description = soup.select_one('[data-automation="jobAdDetails"]')
-        if not description:
-            print(f"Missing description in: {infile.name}")
-            return
-        description = description.get_text(separator=" ", strip=True)
+        description = description.get_text(separator=" ", strip=True) if description else None
 
         job_listing = JobListing(
             source_id=source_id,
