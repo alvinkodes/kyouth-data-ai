@@ -12,7 +12,7 @@ def ingest_mhtml(in_file, out_file, counts):
 
 	input_file.close()
 
-
+	payload = None
 	for part in msg.walk():
 		if part.get_content_type() == "text/html":
 			payload = part.get_payload(decode=True)
