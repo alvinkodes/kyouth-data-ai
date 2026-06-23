@@ -65,9 +65,9 @@ def build_batch_prompt(batch: list[dict]) -> str:
 	
 	Output:
 	[
-	  {"source_id": "JD001", "tech_stack": ["Java", "Spring Boot", "SAP ERP", "SAP BW", "GraphQL", "Oracle", "PostgreSQL", "Kafka"]},
-	  {"source_id": "JD002", "tech_stack": ["ABAP", "SAP S/4HANA", "SAP Fiori", "SQL", "Python"]},
-	  {"source_id": "JD003", "tech_stack": ["JavaScript", "React", "Node.js", "MongoDB", "Redis", "AWS"]}
+	  {"source_id": "JD001", "tech_stack": "Java, Spring Boot, SAP ERP, SAP BW, GraphQL, Oracle, PostgreSQL, Kafka"},
+	  {"source_id": "JD002", "tech_stack": "ABAP, SAP S/4HANA, SAP Fiori, SQL, Python"},
+	  {"source_id": "JD003", "tech_stack": "JavaScript, React, Node.js, MongoDB, Redis, AWS"}
 	]
 	
 	---
