@@ -27,13 +27,17 @@ def embedding_job_titles(conn, client):
 
 	embeddings = {}
 	for title in job_titles:
-		result = client.models.embed_content(
-			model=EMBEDDING_MODEL,
-			contents=[title[0]],
-			config=types.EmbedContentConfig(output_dimensionality=768)
-		)
-		embeddings[title[0]] = result.embeddings[0].values
-		print(f"Embedding: {title[0]}")
+		try:
+			result = client.models.embed_content(
+				model=EMBEDDING_MODEL,
+				contents=[title[0]],
+				config=types.EmbedContentConfig(output_dimensionality=768)
+			)
+			embeddings[title[0]] = result.embeddings[0].values
+			print(f"Embedding: {title[0]}")
+		except Exception as e:
+			print(f"Failed to embed {title[0]}: {e}")
+			sys.exit(1)
 	with open(OUTPUT_FILE, "w") as f:
 		json.dump(embeddings, f)
 
@@ -94,43 +98,47 @@ def extract_resume_skills(client, resume_text: str) -> ResumeExtraction:
 	{resume_text}
 	</resume>"""
 
-	interaction = client.interactions.create(
-		model=MODEL,
-		system_instruction=SYSTEM_PROMPT,
-		input=USER_PROMPT.format(resume_text=resume_text),
-		response_format={
-			"type": "text",
-			"mime_type": "application/json",
-			"schema": ResumeExtraction.model_json_schema()
-		},
-	)
 	try:
+		interaction = client.interactions.create(
+			model=MODEL,
+			system_instruction=SYSTEM_PROMPT,
+			input=USER_PROMPT.format(resume_text=resume_text),
+			response_format={
+				"type": "text",
+				"mime_type": "application/json",
+				"schema": ResumeExtraction.model_json_schema()
+			},
+		)
 		output = ResumeExtraction.model_validate_json(interaction.output_text)
-		#print(output)
+		return output
 	except Exception as e:
-		print(f"Invalid JSON format: {e}")
+		print(f"Failed to extract skills: {e}")
 		sys.exit(1)
-	return output
 
 
 def find_best_matches(client, resume_data: ResumeExtraction) -> List[dict]:
-	result = client.models.embed_content(
-		model=EMBEDDING_MODEL,
-		contents=[resume_data.job_role],
-		config=types.EmbedContentConfig(output_dimensionality=768)
-	)
-	role_vec = result.embeddings[0].values
-	role_vec = np.array(role_vec)
-	with open(OUTPUT_FILE, "r") as f:
-		embeddings = json.load(f)
+	try:
+		result = client.models.embed_content(
+			model=EMBEDDING_MODEL,
+			contents=[resume_data.job_role],
+			config=types.EmbedContentConfig(output_dimensionality=768)
+		)
+		role_vec = result.embeddings[0].values
+		role_vec = np.array(role_vec)
+		with open(OUTPUT_FILE, "r") as f:
+			embeddings = json.load(f)
 
-	matches = []
-	for title, vec in embeddings.items():
-		vec = np.array(vec)
-		score = np.dot(role_vec, vec) / (np.linalg.norm(role_vec) * np.linalg.norm(vec))
-		if score >= 0.8:
-			matches.append({"job_title": title, "score": round(score, 2)})
-	return matches
+		matches = []
+		for title, vec in embeddings.items():
+			vec = np.array(vec)
+			score = np.dot(role_vec, vec) / (np.linalg.norm(role_vec) * np.linalg.norm(vec))
+			if score >= 0.8:
+				matches.append({"job_title": title, "score": round(score, 2)})
+		return matches
+	except Exception as e:
+		print(f"Failed to find best matches: {e}")
+		sys.exit(1)
+
 
 def query_db(conn, matches: List[dict]) -> List[dict]:
 	cursor = conn.cursor()
