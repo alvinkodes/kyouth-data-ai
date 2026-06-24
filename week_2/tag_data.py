@@ -1,4 +1,3 @@
-from plistlib import load
 import sqlite3
 import json
 import time
