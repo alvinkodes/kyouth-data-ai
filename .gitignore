@@ -1,7 +1,7 @@
 data/
-week_1/src/__pycache__/
-week_2/__pycache__
+__pycache__/
 .ruff_cache/
 .venv/
 .env
 week_2/resources/
+week_2/data.json
