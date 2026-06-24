@@ -1,15 +1,17 @@
-from logging import PlaceHolder
-
-from google import genai
-from google.genai import types
-from dotenv import load_dotenv
-from prompt_model import prompt_model
-from pydantic import BaseModel
-from typing import List
 import sys
 import sqlite3
 import json
 import numpy as np
+from pathlib import Path
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
+from pydantic import BaseModel
+from typing import List
+
+OUTPUT_FILE = Path("data.json")
+EMBEDDING_MODEL = "gemini-embedding-2-preview"
+MODEL = "gemini-3.1-flash-lite"
 
 class SkillGapResult(BaseModel):
 	gaps: List[str]
@@ -19,27 +21,24 @@ class ResumeExtraction(BaseModel):
 	skills: List[str]
 
 
-def embedding_job_titles():
-	conn = sqlite3.connect("data/3_gold/jobs.db")
+def embedding_job_titles(conn, client):
 	cursor = conn.cursor()
 	job_titles = cursor.execute("SELECT job_title FROM job").fetchall()
-
-	client = genai.Client()
 
 	embeddings = {}
 	for title in job_titles:
 		result = client.models.embed_content(
-			model="gemini-embedding-2-preview",
+			model=EMBEDDING_MODEL,
 			contents=[title[0]],
 			config=types.EmbedContentConfig(output_dimensionality=768)
 		)
 		embeddings[title[0]] = result.embeddings[0].values
 		print(f"Embedding: {title[0]}")
-	with open("data.json", "w") as f:
+	with open(OUTPUT_FILE, "w") as f:
 		json.dump(embeddings, f)
 
 
-def extract_resume_skills(resume_text: str, model: str) -> ResumeExtraction:
+def extract_resume_skills(client, resume_text: str) -> ResumeExtraction:
 	SYSTEM_PROMPT = """
 	You are a resume parser. Extract the candidate's
 	current or target job role and technical skills from resumes.
@@ -95,9 +94,8 @@ def extract_resume_skills(resume_text: str, model: str) -> ResumeExtraction:
 	{resume_text}
 	</resume>"""
 
-	client = genai.Client()
 	interaction = client.interactions.create(
-		model=model,
+		model=MODEL,
 		system_instruction=SYSTEM_PROMPT,
 		input=USER_PROMPT.format(resume_text=resume_text),
 		response_format={
@@ -115,35 +113,30 @@ def extract_resume_skills(resume_text: str, model: str) -> ResumeExtraction:
 	return output
 
 
-def find_best_matches(resume_data: ResumeExtraction) -> List[dict]:
-	client = genai.Client()
+def find_best_matches(client, resume_data: ResumeExtraction) -> List[dict]:
 	result = client.models.embed_content(
-		model="gemini-embedding-2-preview",
+		model=EMBEDDING_MODEL,
 		contents=[resume_data.job_role],
 		config=types.EmbedContentConfig(output_dimensionality=768)
 	)
-	role_vector = result.embeddings[0].values
-	role_vector = np.array(role_vector)
-	with open("data.json", "r") as f:
+	role_vec = result.embeddings[0].values
+	role_vec = np.array(role_vec)
+	with open(OUTPUT_FILE, "r") as f:
 		embeddings = json.load(f)
 
 	matches = []
-	for title, vector in embeddings.items():
-		vector = np.array(vector)
-		score = np.dot(role_vector, vector) / (np.linalg.norm(role_vector) * np.linalg.norm(vector))
+	for title, vec in embeddings.items():
+		vec = np.array(vec)
+		score = np.dot(role_vec, vec) / (np.linalg.norm(role_vec) * np.linalg.norm(vec))
 		if score >= 0.8:
 			matches.append({"job_title": title, "score": round(score, 2)})
-	matches.sort(key=lambda x: x["score"], reverse=True)
 	return matches
 
-def query_db(matches: List[dict]) -> List[dict]:
-	conn = sqlite3.connect("data/3_gold/jobs.db")
+def query_db(conn, matches: List[dict]) -> List[dict]:
 	cursor = conn.cursor()
-
 	target_roles = [match["job_title"] for match in matches]
-
 	placeholder = ", ".join('?' for _ in target_roles)
-	cursor.execute(f"SELECT tech_stack FROM job WHERE job_title IN ({placeholder})", target_roles)
+	cursor.execute(f"SELECT tech_stack FROM job WHERE job_title IN ({placeholder}) AND tech_stack != 'N/A'", target_roles)
 	rows = cursor.fetchall()
 	conn.close()
 	rows = [row[0] for row in rows]
@@ -151,26 +144,27 @@ def query_db(matches: List[dict]) -> List[dict]:
 
 
 def find_skill_gaps(input_file_dir: str, db_url: str) -> SkillGapResult:
-	conn = sqlite3.connect(db_url)
-	cursor = conn.cursor()
-
-	conn.close()
-	pass
-
-
-if __name__ == "__main__":
 	load_dotenv()
-	#embedding_job_titles()
-	with open("resources/resume_d3.txt", "r") as f:
+	conn = sqlite3.connect(db_url)
+	client = genai.Client()
+
+	if not OUTPUT_FILE.exists():
+		embedding_job_titles(conn, client)
+
+	with open(input_file_dir, "r") as f:
 		resume_text = f.read()
-	resume_data = extract_resume_skills(resume_text, "gemini-3.1-flash-lite")
-	#print(resume_data)
-	matches = find_best_matches(resume_data)
-	#print(matches)
-	rows = query_db(matches)
-	#print(res)
+	resume_data = extract_resume_skills(client, resume_text)
+	matches = find_best_matches(client, resume_data)
+	rows = query_db(conn, matches)
+
 	required_skills = {word.strip() for text in rows for word in text.split(',')}
 	resume_skill = set(resume_data.skills)
 	gaps = sorted(required_skills - resume_skill)
-	gaps = [text.lower() for text in gaps]
+	gaps = {"gaps": [text.lower() for text in gaps]}
+
+	conn.close()
+	return SkillGapResult(**gaps)
+
+if __name__ == "__main__":
+	gaps = find_skill_gaps("resources/resume_d3.txt", "data/3_gold/jobs.db")
 	print(gaps)
