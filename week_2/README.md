@@ -131,6 +131,5 @@ uv run find_skill_gaps.py
 - Job title matching is based on a hardcoded cosine similarity threshold (≥ 0.8).
 
 **Architecture Reflection:**
-- I decide to use cosine similarity for job title matching is due to its scalability and maintainability. The other alternatives considered were creating a ROLE_MAP that maps job_titles to specific keywords. However, as the database grows, maintaining this map becomes cumbersome.
-- I prioritize scalability and maintainability over simplicity in the architecture.
-- I would use better models.
+- Chose embedding-based job title matching over a hardcoded `ROLE_MAP`. A role map works but breaks down as the database grows — every new title needs a manual update. Embeddings handle it automatically.
+- Given more time, I'd use a stronger model to improve extraction accuracy, and add synonym normalisation to the skill comparison step.
