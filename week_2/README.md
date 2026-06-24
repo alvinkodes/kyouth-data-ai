@@ -67,6 +67,7 @@ Tags untagged job listings in the DB with their required tech stacks using Gemin
 - **Input:** `db_url` — path to the SQLite3 database
 - **Output:** `None` (updates `tech_stack` column in-place, batches of 40)
 
+
 ### `find_skill_gaps(input_file_dir: str, db_url: str) -> SkillGapResult` — `find_skill_gaps.py`
 
 Analyses a resume and returns skills present in matching job listings but missing from the resume.
@@ -75,6 +76,7 @@ Analyses a resume and returns skills present in matching job listings but missin
   - `input_file_dir` — path to a plain-text resume file
   - `db_url` — path to the SQLite3 database
 - **Output:** `SkillGapResult(gaps: List[str])` — sorted list of missing skill names (lowercase)
+
 
 ### `prompt_model(model: str, prompt: str) -> str` — `prompt_model.py`
 
