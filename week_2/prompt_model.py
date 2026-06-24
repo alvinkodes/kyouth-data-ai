@@ -20,8 +20,11 @@ def main():
     load_dotenv()
     model = sys.argv[1]
     prompt = sys.argv[2]
-    response = prompt_model(model, prompt)
-    print(response)
+    try:
+        response = prompt_model(model, prompt)
+        print(response)
+    except Exception as e:
+        print(f"Fatal error: {e}")
 
 
 if __name__ == "__main__":
