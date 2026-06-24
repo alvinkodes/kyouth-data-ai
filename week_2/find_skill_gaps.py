@@ -9,12 +9,15 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List
 
+
 OUTPUT_FILE = Path("data.json")
 EMBEDDING_MODEL = "gemini-embedding-2-preview"
 MODEL = "gemini-3.1-flash-lite"
 
+
 class SkillGapResult(BaseModel):
 	gaps: List[str]
+
 
 class ResumeExtraction(BaseModel):
 	job_role: str
@@ -141,11 +144,13 @@ def find_best_matches(client, resume_data: ResumeExtraction) -> List[dict]:
 
 
 def query_db(conn, matches: List[dict]) -> List[dict]:
-	cursor = conn.cursor()
 	target_roles = [match["job_title"] for match in matches]
 	placeholder = ", ".join('?' for _ in target_roles)
+
+	cursor = conn.cursor()
 	cursor.execute(f"SELECT tech_stack FROM job WHERE job_title IN ({placeholder}) AND tech_stack != 'N/A'", target_roles)
 	rows = cursor.fetchall()
+
 	conn.close()
 	rows = [row[0] for row in rows]
 	return rows
@@ -172,6 +177,7 @@ def find_skill_gaps(input_file_dir: str, db_url: str) -> SkillGapResult:
 
 	conn.close()
 	return SkillGapResult(**gaps)
+
 
 if __name__ == "__main__":
 	gaps = find_skill_gaps("resources/resume_d3.txt", "data/3_gold/jobs.db")
