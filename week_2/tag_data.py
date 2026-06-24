@@ -1,8 +1,10 @@
+from plistlib import load
 import sqlite3
 import json
 import time
 import sys
 from prompt_model import prompt_model
+from dotenv import load_dotenv
 
 MAX_RETRIES = 5
 BATCH_SIZE = 40
@@ -10,7 +12,7 @@ DB_URL = "data/3_gold/jobs.db"
 
 def backoff_sleep(attempt: int) -> None:
 	base = 2 ** attempt
-	time.sleep(base)
+	time.sleep(min(10, base))
 
 def build_batch_prompt(batch: list[dict]) -> str:
 	prompt = """
@@ -59,7 +61,15 @@ def build_batch_prompt(batch: list[dict]) -> str:
 	  },
 	  {
 	    "source_id": "JD003",
-	    "description": "Looking for a full-stack engineer proficient in JavaScript, React, and Node.js. Must have experience integrating third-party APIs and working with MongoDB and Redis. Cloud experience on AWS (Lambda, S3, RDS) is required."
+	    "description": "Looking for a full-stack engineer proficient in JS, ReactJS, and Node. Must have experience integrating third-party APIs and working with MongoDB and Redis. Cloud experience on AWS (Lambda, S3, RDS) is required."
+	  },
+	  {
+	    "source_id": "JD004",
+	    "description": "Seeking a developer skilled in Vue, AngularJS, and NextJS. Knowledge of Golang and sklearn for backend/ML services is highly preferred. CI/CD experience with Github Actions or Gitlab CI is needed."
+	  },
+	  {
+	    "source_id": "JD005",
+	    "description": "Backend engineer needed for a modern legacy migration. Must be experts in c-sharp and the dotnet ecosystem. Strong TS frontend skills are a major bonus."
 	  }
 	]
 	
@@ -67,7 +77,9 @@ def build_batch_prompt(batch: list[dict]) -> str:
 	[
 	  {"source_id": "JD001", "tech_stack": "Java, Spring Boot, SAP ERP, SAP BW, GraphQL, Oracle, PostgreSQL, Kafka"},
 	  {"source_id": "JD002", "tech_stack": "ABAP, SAP S/4HANA, SAP Fiori, SQL, Python"},
-	  {"source_id": "JD003", "tech_stack": "JavaScript, React, Node.js, MongoDB, Redis, AWS"}
+	  {"source_id": "JD003", "tech_stack": "JavaScript, React, Node.js, MongoDB, Redis, AWS"},
+	  {"source_id": "JD004", "tech_stack": "Vue.js, Angular, Next.js, Go, scikit-learn, GitHub Actions, GitLab CI"},
+	  {"source_id": "JD005", "tech_stack": "C#, .NET, TypeScript"}
 	]
 	
 	---
@@ -120,4 +132,5 @@ def tag_data(db_url: str):
 
 
 if __name__ == "__main__":
+	load_dotenv()
 	tag_data(DB_URL)

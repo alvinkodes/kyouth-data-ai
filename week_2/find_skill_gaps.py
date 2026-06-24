@@ -1,7 +1,8 @@
-import sys
 import sqlite3
 import json
 import numpy as np
+import time
+import sys
 from pathlib import Path
 from google import genai
 from google.genai import types
@@ -10,6 +11,7 @@ from pydantic import BaseModel
 from typing import List
 
 
+MAX_RETRIES = 5
 OUTPUT_FILE = Path("data.json")
 EMBEDDING_MODEL = "gemini-embedding-2-preview"
 MODEL = "gemini-3.1-flash-lite"
@@ -24,19 +26,33 @@ class ResumeExtraction(BaseModel):
 	skills: List[str]
 
 
+def backoff_sleep(attempt: int) -> None:
+	base = 2 ** attempt
+	time.sleep(min(10, base))
+
+
 def embedding_job_titles(conn, client):
 	cursor = conn.cursor()
 	job_titles = cursor.execute("SELECT job_title FROM job").fetchall()
 
 	embeddings = {}
 	for title in job_titles:
-		result = client.models.embed_content(
-			model=EMBEDDING_MODEL,
-			contents=[title[0]],
-			config=types.EmbedContentConfig(output_dimensionality=768)
-		)
-		embeddings[title[0]] = result.embeddings[0].values
-		print(f"Embedding: {title[0]}")
+		for attempt in range(MAX_RETRIES):
+			try:
+				result = client.models.embed_content(
+					model=EMBEDDING_MODEL,
+					contents=[title[0]],
+					config=types.EmbedContentConfig(output_dimensionality=768)
+				)
+				embeddings[title[0]] = result.embeddings[0].values
+				print(f"Embedding: {title[0]}")
+				break
+			except Exception as e:
+				if attempt == MAX_RETRIES - 1:
+					print(f"Failed to embed: {title[0]}")
+					sys.exit(1)
+				print(f"Attempt {attempt} failed: {e}")
+				backoff_sleep(attempt)
 	with open(OUTPUT_FILE, "w") as f:
 		json.dump(embeddings, f)
 
