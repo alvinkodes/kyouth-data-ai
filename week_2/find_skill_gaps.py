@@ -30,17 +30,13 @@ def embedding_job_titles(conn, client):
 
 	embeddings = {}
 	for title in job_titles:
-		try:
-			result = client.models.embed_content(
-				model=EMBEDDING_MODEL,
-				contents=[title[0]],
-				config=types.EmbedContentConfig(output_dimensionality=768)
-			)
-			embeddings[title[0]] = result.embeddings[0].values
-			print(f"Embedding: {title[0]}")
-		except Exception as e:
-			print(f"Failed to embed {title[0]}: {e}")
-			sys.exit(1)
+		result = client.models.embed_content(
+			model=EMBEDDING_MODEL,
+			contents=[title[0]],
+			config=types.EmbedContentConfig(output_dimensionality=768)
+		)
+		embeddings[title[0]] = result.embeddings[0].values
+		print(f"Embedding: {title[0]}")
 	with open(OUTPUT_FILE, "w") as f:
 		json.dump(embeddings, f)
 
@@ -67,7 +63,7 @@ def extract_resume_skills(client, resume_text: str) -> ResumeExtraction:
 
 	<resume>
 	JANE DOE
-	Data Engineer
+	Frontend Engineer
 	SKILLS
 	Technical: React, TypeScript, CSS, Webpack
 	Soft Skills: Communication
@@ -101,46 +97,38 @@ def extract_resume_skills(client, resume_text: str) -> ResumeExtraction:
 	{resume_text}
 	</resume>"""
 
-	try:
-		interaction = client.interactions.create(
-			model=MODEL,
-			system_instruction=SYSTEM_PROMPT,
-			input=USER_PROMPT.format(resume_text=resume_text),
-			response_format={
-				"type": "text",
-				"mime_type": "application/json",
-				"schema": ResumeExtraction.model_json_schema()
-			},
-		)
-		output = ResumeExtraction.model_validate_json(interaction.output_text)
-		return output
-	except Exception as e:
-		print(f"Failed to extract skills: {e}")
-		sys.exit(1)
+	interaction = client.interactions.create(
+		model=MODEL,
+		system_instruction=SYSTEM_PROMPT,
+		input=USER_PROMPT.format(resume_text=resume_text),
+		response_format={
+			"type": "text",
+			"mime_type": "application/json",
+			"schema": ResumeExtraction.model_json_schema()
+		},
+	)
+	output = ResumeExtraction.model_validate_json(interaction.output_text)
+	return output
 
 
 def find_best_matches(client, resume_data: ResumeExtraction) -> List[dict]:
-	try:
-		result = client.models.embed_content(
-			model=EMBEDDING_MODEL,
-			contents=[resume_data.job_role],
-			config=types.EmbedContentConfig(output_dimensionality=768)
-		)
-		role_vec = result.embeddings[0].values
-		role_vec = np.array(role_vec)
-		with open(OUTPUT_FILE, "r") as f:
-			embeddings = json.load(f)
+	result = client.models.embed_content(
+		model=EMBEDDING_MODEL,
+		contents=[resume_data.job_role],
+		config=types.EmbedContentConfig(output_dimensionality=768)
+	)
+	role_vec = result.embeddings[0].values
+	role_vec = np.array(role_vec)
+	with open(OUTPUT_FILE, "r") as f:
+		embeddings = json.load(f)
 
-		matches = []
-		for title, vec in embeddings.items():
-			vec = np.array(vec)
-			score = np.dot(role_vec, vec) / (np.linalg.norm(role_vec) * np.linalg.norm(vec))
-			if score >= 0.8:
-				matches.append({"job_title": title, "score": round(score, 2)})
-		return matches
-	except Exception as e:
-		print(f"Failed to find best matches: {e}")
-		sys.exit(1)
+	matches = []
+	for title, vec in embeddings.items():
+		vec = np.array(vec)
+		score = np.dot(role_vec, vec) / (np.linalg.norm(role_vec) * np.linalg.norm(vec))
+		if score >= 0.8:
+			matches.append({"job_title": title, "score": round(score, 2)})
+	return matches
 
 
 def query_db(conn, matches: List[dict]) -> List[dict]:
@@ -151,7 +139,6 @@ def query_db(conn, matches: List[dict]) -> List[dict]:
 	cursor.execute(f"SELECT tech_stack FROM job WHERE job_title IN ({placeholder}) AND tech_stack != 'N/A'", target_roles)
 	rows = cursor.fetchall()
 
-	conn.close()
 	rows = [row[0] for row in rows]
 	return rows
 
@@ -180,5 +167,8 @@ def find_skill_gaps(input_file_dir: str, db_url: str) -> SkillGapResult:
 
 
 if __name__ == "__main__":
-	gaps = find_skill_gaps("resources/resume_d3.txt", "data/3_gold/jobs.db")
-	print(gaps)
+	try:
+		gaps = find_skill_gaps("resources/resume_d3.txt", "data/3_gold/jobs.db")
+		print(gaps)
+	except Exception as e:
+		print(f"Fatal error: {e}")
