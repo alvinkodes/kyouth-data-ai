@@ -1,0 +1,9 @@
+body {
+	background: #fff;
+}
+		
+#chatBody {
+	background: #f0efeb;
+	height: 720px;
+	overflow-y: auto;
+}
