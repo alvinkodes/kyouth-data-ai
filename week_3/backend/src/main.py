@@ -20,7 +20,8 @@ app = FastAPI()
 frontend_origin = os.getenv("FRONTEND_ORIGIN")
 
 origins = [
-	"http://localhost:8000"
+	"http://localhost:8000",
+	"http://0.0.0.0:8000"
 ]
 
 app.add_middleware(

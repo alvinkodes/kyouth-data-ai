@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+    environment:
+      - BACKEND_URL=${BACKEND_URL}
+    depends_on:
+      - backend
+
+networks:
+  app-network:
+    driver: bridge
