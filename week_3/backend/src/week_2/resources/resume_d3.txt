@@ -1,0 +1,41 @@
+SARAH LIM
+Data Analyst
+sarah.lim@example.com • 0123456789 • Kuala Lumpur • linkedin.com/in/sarahlim • github.com/sarahlim
+
+SUMMARY
+Detail-oriented data analyst with experience transforming raw data into actionable insights. Skilled in data visualization, reporting, and statistical analysis to support business decision-making.
+
+EDUCATION
+Monash University Malaysia
+Bachelor of Business Analytics
+Kuala Lumpur
+Dean's List 2025
+
+SKILLS
+Technical Skills: Python, SQL, Power BI, Tableau, Excel, Pandas
+Languages: English, Bahasa Malaysia
+Additional Skills: Presentation Skills
+
+CERTIFICATIONS
+• Microsoft Certified: Power BI Data Analyst Associate
+September 2025
+
+EXPERIENCE
+Insight Analytics Sdn Bhd
+Data Analyst Intern
+May 2025 – August 2025
+• Built interactive dashboards for business stakeholders
+• Cleaned and transformed large datasets using Python and SQL
+• Automated weekly reporting processes
+• Performed trend analysis and generated business insights
+
+PROJECTS
+Sales Performance Dashboard
+• Developed a Power BI dashboard tracking sales KPIs across regions
+• Automated data ingestion and transformation workflows
+• Reduced manual reporting effort by 80%
+
+Customer Churn Analysis
+• Analyzed customer behavior data to identify churn indicators
+• Built predictive models using Python and Pandas
+• Presented recommendations to improve customer retention

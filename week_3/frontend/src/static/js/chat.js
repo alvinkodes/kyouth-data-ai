@@ -26,7 +26,6 @@ const fileInput = document.getElementById('fileInput')
 fileInput.addEventListener('change', async (e) => {
 	const file = e.target.files[0];
 	if (!file) return;
-
 	if (file.type !== 'application/pdf') {
 		alert('Only PDF files are supported');
 		return;
@@ -62,8 +61,11 @@ async function sendMessage() {
 		pdf_text: extractedPdfText || null
 	};
 
+	extractedPdfText = '';
+	fileInput.value = '';
+
 	try {
-		const response = await fetch(BACKEND_URL, {
+		const response = await fetch(`${window.CONFIG.BACKEND_URL}/chat`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -71,8 +73,8 @@ async function sendMessage() {
 			body: JSON.stringify(payload)
 		});
 		const data = await response.json();
-
-		appendMessageToUI("Bot", data.response);
+		console.log(data)
+		appendMessageToUI("Bot", data.message);
 	} catch (error) {
 		console.error("Error sending message:", error);
 		appendMessageToUI("Server Error", "An error occurred while sending your message. Please try again later.")
