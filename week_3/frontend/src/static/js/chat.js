@@ -65,7 +65,7 @@ async function sendMessage() {
 	fileInput.value = '';
 
 	try {
-		const response = await fetch(`${window.CONFIG.BACKEND_URL}/chat`, {
+		const response = await fetch(`${BACKEND_URL}/chat`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
